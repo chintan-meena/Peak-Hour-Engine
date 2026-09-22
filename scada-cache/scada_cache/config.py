@@ -59,16 +59,25 @@ def load_config(config_path=None) -> dict:
 
 
 def powertools_home() -> Path:
-    """Root of the shared PowerTools data area, as the `iex` library defines it.
+    """Root of the shared PowerTools data area.
 
-    ``$POWERTOOLS_HOME`` when set, else ``~/PowerTools``. On both machines that
-    location is a OneDrive folder (directly on Windows, via a symlink on the
-    MacBook), so whatever is written there syncs between them.
+    Delegates to `powertools_common.paths.powertools_home()` -- the same
+    resolution every other reader in this package (`peak_hours.paths`) uses:
+    `$POWERTOOLS_HOME` override, else the detected OneDrive folder (Windows
+    `%OneDrive%`/`%OneDriveCommercial%`, macOS `~/Library/CloudStorage/
+    OneDrive-*`), else a plain `~/PowerTools` as a last resort.
+
+    This module used to resolve `~/PowerTools` directly, skipping the
+    OneDrive-detection step -- on a machine where `~/PowerTools` exists as a
+    plain local folder (not a symlink into OneDrive), that silently read/wrote
+    a cache nothing else could see, invisible from any other machine
+    including a MacBook that only has OneDrive access. Confirmed empirically
+    on this Windows machine: `~/PowerTools` was a real local folder, while the
+    actual synced parquet cache already existed at the OneDrive location this
+    function now returns.
     """
-    custom = os.environ.get("POWERTOOLS_HOME")
-    if custom:
-        return Path(custom)
-    return Path.home() / "PowerTools"
+    from powertools_common.paths import powertools_home as _shared_powertools_home
+    return _shared_powertools_home()
 
 
 def default_cache_dir() -> Path:
