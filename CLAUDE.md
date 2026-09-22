@@ -7,6 +7,18 @@ methodology for choosing those hours instead of ad hoc human judgement —
 this repo, the pilot, and an intended IEEE-PES-style operational paper are
 all in service of that one goal.
 
+**Who declares: NRLDC, not NRPC.** The peak hours this engine chooses are
+declared by the Northern Regional Load Despatch Centre — the system operator.
+NRPC, the Northern Regional Power Committee, is a separate coordinating body
+and does not issue the declaration. The legacy *code* says "NRPC" in ~25
+places — `hydro_peak_model.py`'s `NRPC_%`/`NRPC_Freq_%`/`NRPC_Morning`
+columns and its print labels, plus `run_registry.py` — all of it a
+misattribution of the declaring authority. Corrected throughout `peak_hours/`
+and this file; left as-is in `legacy/`, which is a frozen record. The
+methodology write-up (`legacy/docs/Peak_Hour_Declaration.docx`) is clean —
+it says "RLDC" 6 times and never "NRPC" — so the paper should tighten that
+to **NRLDC** for specificity, not fix an error.
+
 **This is now a standalone repository**, migrated out of the
 `power-applications` monorepo (`entitlement-monitor` branch, commits
 `b532bb9`..`7b1bcb1`, plus an earlier squashed snapshot on that repo's
@@ -76,7 +88,7 @@ out-of-time; RTM MAE 360 → ~1150 Rs/MWh). Meanwhile:
 - **Thermal**: declaring last year's actual optimal window for the same
   calendar month captures **98.34% mean** of ex-post-optimal value (measured
   here, `peak_hours.benchmarking.ex_post_optimal`, 39 months) — vs 90.69%
-  for NRPC/RLDC's own real declarations, and vs only 92.80% for the legacy
+  for NRLDC's own real declarations, and vs only 92.80% for the legacy
   pipeline's own gate-constrained optimum.
 - **Hydro**: same story, 98.55% mean, and `hydro_peak_model.py`'s own
   zero-fitted-parameter design (RTM price alone, ranked over M-12/M-24,
@@ -223,7 +235,7 @@ asserts it resolves identically to the real library whenever both are present.
 | peak_hours cache dir | `cache_dir("peak_hours")` | == `peak_hours.paths.MARKET_CACHE_DIR` |
 | Pipeline outputs | `reports_dir("Peak_Hour_Engine", "monthly_peak_pipeline_outputs")` | == `peak_hours.paths.PIPELINE_ARTIFACTS`; shared, gets overwritten by every notebook run |
 | SCADA parquet cache | `scada-cache/scada_cache/config.py` → `$POWERTOOLS_HOME/cache/scada` | code lives in this repo now; data stays OneDrive |
-| NRPC actual-filed peak hours | `cache_dir("peakhrs")` | weekly `peakHr-<start>-<end>.csv` block grids; manually-downloaded NOC zips, LAN/GUI-gated, can go stale |
+| NRLDC actual-filed peak hours | `cache_dir("peakhrs")` | weekly `peakHr-<start>-<end>.csv` block grids; manually-downloaded NOC zips, LAN/GUI-gated, can go stale |
 
 **Fixed 2026-09-22 (was: known sync gap, "partially worked around, not
 fixed")**: `scada-cache/scada_cache/config.py`'s own `powertools_home()`
@@ -298,9 +310,13 @@ Credentials: `iex` reads `load_secrets("iex", ...)` → env var → OS keychain 
 
 ## Out of scope unless the user explicitly asks
 
-- Renaming the `NRPC_%` column `hydro_peak_model.py` writes into
-  `Hydro_Model_Backtest.csv` (its own output contract in the *other*
-  project, bigger blast radius).
+- Rewriting the `NRPC_%` column *in the legacy code itself*
+  (`legacy/scripts/hydro_peak_model.py` and the `Hydro_Model_Backtest.csv`
+  files already on OneDrive). The name is wrong — see "Who declares" — but
+  `legacy/` is a frozen snapshot and rewriting it destroys its value as a
+  faithful record of what produced the published numbers. `registry.py` reads
+  `NRLDC_%` first and falls back to `NRPC_%`, so the correction lands without
+  a migration; the legacy files age out on their own at Segment 8.
 - Bringing `D:\Peak_Hours_Declaration` (a separate, retired notebook, no
   `.git`) under version control, or porting its heuristics here.
 - Any git-history rewrite.

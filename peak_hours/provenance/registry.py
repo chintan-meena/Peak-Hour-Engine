@@ -130,9 +130,29 @@ def harvest() -> dict:
     if hyd.exists():
         d = pd.read_csv(hyd)
         m["Hydro_Model_Capture_mean"] = round(float(d["Model_%"].mean()), 2)
-        m["Hydro_RLDC_Capture_mean"] = round(float(d["NRPC_%"].mean()), 2)
+        declared = _declared_capture_column(d)
+        if declared is not None:
+            m["Hydro_RLDC_Capture_mean"] = round(float(d[declared].mean()), 2)
 
     return m
+
+
+#: The column holding "what was actually declared, scored" in
+#: Hydro_Model_Backtest.csv. Peak hours are declared by **NRLDC**, but the
+#: legacy hydro model labelled this column `NRPC_%` -- NRPC is the regional
+#: *committee*, a different body that does not issue the declaration. Files
+#: already written to OneDrive carry the old name, so read either: the correct
+#: name first, the legacy one as a fallback. Anything this engine *writes*
+#: uses NRLDC.
+_DECLARED_CAPTURE_COLUMNS = ("NRLDC_%", "NRPC_%")
+
+
+def _declared_capture_column(d: pd.DataFrame) -> str | None:
+    """First declared-capture column present, or None if the file predates both."""
+    for name in _DECLARED_CAPTURE_COLUMNS:
+        if name in d.columns:
+            return name
+    return None
 
 
 # ── archive + append ────────────────────────────────────────────────────────

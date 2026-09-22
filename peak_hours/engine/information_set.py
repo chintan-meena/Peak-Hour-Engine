@@ -7,7 +7,7 @@ tracks sunset (seasonal), not recent trend, so blending in adjacent months
 drags the declared window 1.5-2 hours early. Measured out-of-sample (19
 months, frequency stress captured):
 
-    M-12, M-1, M-2   57.91%   (loses to NRPC's 61.32%)
+    M-12, M-1, M-2   57.91%   (loses to NRLDC's own 61.32%)
     M-12             67.43%
     M-12, M-24       67.57%   <- this is what's implemented below
 
