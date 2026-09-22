@@ -1,0 +1,22 @@
+# Per-machine config (paths differ between the MacBook and the Windows PC)
+config.local.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Parsed parquet cache - NOT tracked by git.
+#
+# It lives in the shared PowerTools area instead:
+#
+#     $POWERTOOLS_HOME/cache/scada        (default: ~/PowerTools/cache/scada)
+#
+# which is a OneDrive folder on both machines, so the other machine still
+# loads warm without every clone carrying 100 MB of derived parquet. This is
+# the same rule the wbes and iex caches in power-libraries already follow
+# ("Cache files are not tracked by Git" - power-libraries/README.md).
+#
+# Resolution order lives in scada_cache/config.py::cache_dir.
+cache/

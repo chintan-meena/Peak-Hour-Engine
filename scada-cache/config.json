@@ -1,0 +1,23 @@
+{
+  "cache_dir": "",
+  "sources": {
+    "state_demand": {
+      "profile": "state",
+      "resolution": "5min",
+      "paths": {
+        "windows": "\\\\192.168.50.247\\scadashare\\Stack 5minute",
+        "darwin": "/Volumes/scadashare/Stack 5minute",
+        "linux": "/mnt/scadashare/Stack 5minute"
+      }
+    },
+    "nr": {
+      "profile": "nr",
+      "resolution": "1min",
+      "paths": {
+        "windows": "\\\\192.168.50.247\\scadashare\\Stack1Minute",
+        "darwin": "/Volumes/scadashare/Stack1Minute",
+        "linux": "/mnt/scadashare/Stack1Minute"
+      }
+    }
+  }
+}

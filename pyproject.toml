@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peak-hours"
+version = "0.1.0"
+description = "NRLDC peak-hour declaration engine (thermal + hydro, unified)"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "pyarrow>=10.0",
+    "openpyxl>=3.1",
+    "pyyaml>=6.0",
+    "truststore>=0.8",  # OS cert store, needed on the TLS-inspecting office proxy
+]
+
+# NOTE: `powertools_common` (peak_hours.paths' cache_dir/reports_dir) and, for
+# the --refresh path, `iex` are internal libraries at D:\power-libraries, not
+# on PyPI. They resolve via that directory being on PYTHONPATH (already set
+# machine-wide here) rather than through this dependency list -- see README.
+
+[project.optional-dependencies]
+# Only needed to refresh market data from IEX on the LAN machine; not required
+# for declare/backtest/benchmark against the committed CSVs (e.g. off-LAN).
+iex = []
+# The original custom-built forecasting stack (447-feature LightGBM net-load
+# model + hurdle-quantile RTM ensemble), ported from the notebook -- Segment 6.
+forecasting = [
+    "lightgbm>=4.0",
+    "scikit-learn>=1.3",
+    "holidays>=0.40",
+    "requests>=2.31",
+]
+# The Hugging Face zero-shot pilot (see docs/pilot notes) -- a candidate to
+# replace or sit alongside the `forecasting` stack in the advisory role.
+hf-forecasting = [
+    "chronos-forecasting>=2.0",
+    "torch>=2.0",
+]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+peak-hours = "peak_hours.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["peak_hours*"]
+# scada-cache/scada_cache is NOT installed as part of this package -- it's
+# reached the same way the original scripts did, via sys.path.insert() at
+# peak_hours.paths.SCADA_DIR (see benchmarking/ex_post_optimal.py). Keeping
+# it a plain sys.path addition rather than a proper installed subpackage
+# matches how it worked before the copy-in; revisit if/when it needs its own
+# tests or a cleaner import story.
+
+[tool.pytest.ini_options]
+markers = [
+    "requires_scada_cache: needs the local SCADA parquet cache, auto-skipped otherwise",
+]
