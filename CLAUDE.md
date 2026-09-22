@@ -24,19 +24,25 @@ touching it.
 
 ## Where the real logic actually lives (read this first)
 
-The **declare engine** (`peak_hours/engine/`) is still an empty stub — this
-is Segment 2 of the plan below. The real forecasting + declaration decision
-currently runs in the *separate, not-yet-migrated* legacy project
-`ML_Peak_Hour_Declaration` (its own repo/checkout,
-`Peak_Hours_Complete_Pipeline_v1.ipynb`, 51 cells: LightGBM net-load + RTM
-price forecasts, then a weighted block-scoring/selection step with ~20
-hand-set `Peak_Score` coefficients). That project is being read from for
-reference and ported piece by piece — it is not otherwise touched.
+`peak_hours/engine/` now has its Segment 2 primitives (`windows.py`,
+`gates.py`, `scoring.py`, `information_set.py`, `aggregation.py`,
+`select.py`) but **nothing is wired to real data yet** — no `hydro.yaml`/
+`thermal.yaml` config, no `seasonal_baseline.py`, no CLI `declare` command.
+The real forecasting + declaration decision still runs in the *separate,
+not-yet-migrated* legacy project `ML_Peak_Hour_Declaration` (its own
+repo/checkout, `Peak_Hours_Complete_Pipeline_v1.ipynb`, 51 cells: LightGBM
+net-load + RTM price forecasts, then a weighted block-scoring/selection step
+with ~20 hand-set `Peak_Score` coefficients). That project is being read
+from for reference and ported piece by piece — it is not otherwise touched.
 
 What *is* real here today: `peak_hours/io` (market cache, declarations),
 `peak_hours/benchmarking` (`ex_post_optimal` — length-matched value-capture
 scoring; `replay_scorecard` — multi-candidate side-by-side scoring, supports
-in-progress months), `peak_hours/provenance` (run history/fingerprinting).
+in-progress months), `peak_hours/provenance` (run history/fingerprinting),
+`peak_hours/engine` (candidate windows, ramp gates, RTM-only scoring, the 6
+generic monthly-aggregation methods, same-month-2yr information set, argmax
+selection — all pure functions, unit-tested against synthetic/hand-computed
+cases, not yet plugged into `benchmarking` or real market data).
 
 ## The core finding everything else is built around
 
@@ -80,7 +86,7 @@ review checkpoint after each segment, don't skip ahead.
   `io/declarations.py`, `benchmarking/ex_post_optimal.py`,
   `provenance/registry.py` — ported from the legacy scripts, verified
   byte-for-byte, now fully OneDrive/self-contained (no sibling checkout).
-- **Segment 2 — core engine primitives.** `engine/windows.py` (candidate
+- **Segment 2 — [DONE].** `engine/windows.py` (candidate
   enumeration — retires 3 near-duplicate implementations already in
   `ex_post_optimal.build_candidates`, `hydro_peak_model.py`, the notebook's
   inline builder), `engine/gates.py` (evening/morning ramp gate), `engine/
