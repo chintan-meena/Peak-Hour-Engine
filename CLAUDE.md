@@ -15,6 +15,16 @@ code is copied in under `scada-cache/`, and all data (market prices,
 declaration history, SCADA parquet) resolves via `powertools_common` to the
 shared OneDrive PowerTools area — no sibling checkout needed on any machine.
 
+**Physical location**: `D:\power-research\Peak_Hour_Engine\` — deliberately
+outside `D:\power-applications\` (a peer of it, like `D:\power-libraries\`),
+also 2026-09-22. The legacy `ML_Peak_Hour_Declaration` project this reads
+from for reference still lives at `D:\power-applications\ML_Peak_Hour_Declaration\`
+(unaffected by this move — nothing here depends on being its sibling any
+more; see the OneDrive data layout below). A stale, now-empty
+`D:\power-applications\Peak_Hour_Engine\` may still exist if a leftover
+process (see session note below) was holding it open at move time — safe to
+delete once nothing has it open, contains nothing.
+
 **Session note (2026-09-22):** two Claude Code sessions had independently
 been working this project for several days without knowing about each other
 (see git log below for the overlap). One has taken over as the sole active
@@ -194,14 +204,35 @@ code works unmodified on the MacBook, reading whatever was last synced.
 | SCADA parquet cache | `scada-cache/scada_cache/config.py` → `$POWERTOOLS_HOME/cache/scada` | code lives in this repo now; data stays OneDrive |
 | NRPC actual-filed peak hours | `cache_dir("peakhrs")` | weekly `peakHr-<start>-<end>.csv` block grids; manually-downloaded NOC zips, LAN/GUI-gated, can go stale |
 
-**Known sync gap (partially worked around, not fixed):** on this Windows
-machine, `scada-cache/scada_cache/config.py`'s own `powertools_home()` does
-**not** check the OneDrive env vars the way `powertools_common.paths.
-powertools_home()` does — it resolves to a local-only
-`C:\Users\chintan\PowerTools\cache\scada`, separate from the OneDrive copy.
-Every time `scada-cache/update_cache.py` is run, manually copy the refreshed
-`cache/scada/nr/*.parquet` + `_manifest.json` into the OneDrive copy, or
-other machines/checkouts keep seeing a stale snapshot.
+**Fixed 2026-09-22 (was: known sync gap, "partially worked around, not
+fixed")**: `scada-cache/scada_cache/config.py`'s own `powertools_home()`
+used to skip the OneDrive-detection step `powertools_common.paths.
+powertools_home()` does, resolving instead to a plain `~/PowerTools` --
+which on this Windows machine was a real local-only folder
+(`C:\Users\chintan\PowerTools\cache\scada`), not a symlink into OneDrive,
+confirmed empirically. That made the SCADA parquet cache invisible to any
+other machine, MacBook included. It now delegates to `powertools_common.
+paths.powertools_home()` directly, same as everything else in this package.
+Verified end-to-end: `load_frequency()` returns real data (147,648 rows)
+through the corrected path, which already had the full synced cache
+(`nr/2022..2026.parquet`) sitting there -- the data was fine, only the code
+was looking in the wrong place. `scada-cache/update_cache.py` (the raw LAN
+ingest, `\\...\scadashare`) is unaffected and still Windows/LAN-only, as it
+has to be -- it's the one path in this whole package that genuinely needs
+LAN access, and it's never on the read path `declare`/`benchmark`/`register`
+use.
+
+**MacBook readiness, audited 2026-09-22** (not yet literally run there, but
+every dependency path traced): `declare`/`benchmark`/`register`/tests need
+zero LAN access -- only `market_cache.refresh()` (IEX) and `scada-cache/
+update_cache.py` (`\\...\scadashare`) are LAN-gated, and neither is on the
+read path. No hardcoded Windows path literals in `peak_hours/` itself (`grep`
+confirmed clean); `market_cache.py`'s `_IEX_ROOTS` already lists a macOS
+candidate (`~/Development/power-libraries`) alongside the Windows one. What
+a fresh MacBook checkout still needs, not provided by this repo: `D:\
+power-libraries`'s Mac equivalent on `PYTHONPATH` (so `powertools_common`
+and, if ever needed, `iex` import), and OneDrive signed in and synced (so
+`onedrive_root()` finds `~/Library/CloudStorage/OneDrive-*`).
 
 ## Running things
 
