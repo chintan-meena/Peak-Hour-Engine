@@ -10,17 +10,28 @@ all in service of that one goal.
 **This is now a standalone repository**, migrated out of the
 `power-applications` monorepo (`entitlement-monitor` branch, commits
 `b532bb9`..`7b1bcb1`, plus an earlier squashed snapshot on that repo's
-`peak-hour-engine` branch) on 2026-09-22. Fully self-contained: scada-cache's
-code is copied in under `scada-cache/`, and all data (market prices,
-declaration history, SCADA parquet) resolves via `powertools_common` to the
-shared OneDrive PowerTools area — no sibling checkout needed on any machine.
+`peak-hour-engine` branch) on 2026-09-22. Fully self-contained — **a clone of
+this repo plus the shared OneDrive data area is the whole dependency set, on
+either machine**:
+
+- scada-cache's code is copied in under `scada-cache/`;
+- the entire legacy `ML_Peak_Hour_Declaration` project is imported under
+  `legacy/` as frozen reference (see `legacy/README.md`), so no migration
+  segment needs another repo checked out to read from;
+- `powertools_common` from `power-libraries` is used when importable but is
+  no longer required — `peak_hours/_powertools_fallback.py` resolves the same
+  OneDrive paths when it isn't, pinned to the real library by
+  `tests/unit/test_powertools_fallback.py` so the copy can't drift;
+- all data (market prices, declaration history, SCADA parquet) resolves to
+  the shared OneDrive PowerTools area, found automatically on Windows and
+  macOS alike.
 
 **Physical location**: `D:\power-research\Peak_Hour_Engine\` — deliberately
 outside `D:\power-applications\` (a peer of it, like `D:\power-libraries\`),
-also 2026-09-22. The legacy `ML_Peak_Hour_Declaration` project this reads
-from for reference still lives at `D:\power-applications\ML_Peak_Hour_Declaration\`
-(unaffected by this move — nothing here depends on being its sibling any
-more; see the OneDrive data layout below). A stale, now-empty
+also 2026-09-22. The original, still-live `ML_Peak_Hour_Declaration` remains at
+`D:\power-applications\ML_Peak_Hour_Declaration\` and keeps running until
+Segment 8 cuts over; it is no longer *read* from, though — use `legacy/`, which
+is the same code frozen at 2026-09-22. A stale, now-empty
 `D:\power-applications\Peak_Hour_Engine\` may still exist if a leftover
 process (see session note below) was holding it open at move time — safe to
 delete once nothing has it open, contains nothing.
@@ -38,12 +49,14 @@ touching it.
 `gates.py`, `scoring.py`, `information_set.py`, `aggregation.py`,
 `select.py`) but **nothing is wired to real data yet** — no `hydro.yaml`/
 `thermal.yaml` config, no `seasonal_baseline.py`, no CLI `declare` command.
-The real forecasting + declaration decision still runs in the *separate,
-not-yet-migrated* legacy project `ML_Peak_Hour_Declaration` (its own
-repo/checkout, `Peak_Hours_Complete_Pipeline_v1.ipynb`, 51 cells: LightGBM
-net-load + RTM price forecasts, then a weighted block-scoring/selection step
-with ~20 hand-set `Peak_Score` coefficients). That project is being read
-from for reference and ported piece by piece — it is not otherwise touched.
+The real forecasting + declaration decision still runs in the *not-yet-migrated*
+legacy pipeline, now imported here as
+`legacy/notebooks/Peak_Hours_Complete_Pipeline_v1.py` (the 51-cell notebook
+converted to plain Python, outputs stripped: LightGBM net-load + RTM price
+forecasts, then a weighted block-scoring/selection step with ~20 hand-set
+`Peak_Score` coefficients — see `SECTION 23`). Port from `legacy/`, not from
+`D:\power-applications\ML_Peak_Hour_Declaration\`: same code, but `legacy/` is
+frozen, travels with the repo, and exists on the MacBook.
 
 What *is* real here today: `peak_hours/io` (market cache, declarations),
 `peak_hours/benchmarking` (`ex_post_optimal` — length-matched value-capture
@@ -185,15 +198,23 @@ shape-disaggregation back to 15-min blocks, to avoid the recursive-compounding
 trap the legacy notebook's v3→v4 fix already discovered), and benchmark
 against the seasonal-baseline method, not just a naive baseline.
 
-## Data layout — everything is OneDrive-backed via `powertools_common`
+## Data layout — everything is OneDrive-backed
 
-`D:\power-libraries` is on `PYTHONPATH` (machine-wide env var), so
-`from powertools_common import cache_dir, reports_dir` works directly, and
-`import scada_cache` works once `peak_hours.paths.SCADA_DIR` is on `sys.path`
-(done automatically by code that needs it). `cache_dir(name)` /
-`reports_dir(program, *sub)` resolve to the OneDrive PowerTools area —
-`%OneDrive%` on Windows, `~/Library/CloudStorage/...` on macOS — so the same
-code works unmodified on the MacBook, reading whatever was last synced.
+`peak_hours.paths` is the one place that answers "where does this live". It
+imports `cache_dir`/`reports_dir` from `powertools_common` when that's
+importable (`D:\power-libraries` is on `PYTHONPATH` here via a machine-wide
+env var) and from `peak_hours/_powertools_fallback.py` when it isn't, so a
+bare clone works either way. `import scada_cache` works once
+`peak_hours.paths.SCADA_DIR` is on `sys.path` (done automatically by code that
+needs it). `cache_dir(name)` / `reports_dir(program, *sub)` resolve to the
+OneDrive PowerTools area — `%OneDrive%` on Windows,
+`~/Library/CloudStorage/...` on macOS — so the same code works unmodified on
+the MacBook, reading whatever was last synced.
+
+**Don't add a third copy of this path logic.** Two already diverged once (see
+the scada-cache fix below) and cost a silently-invisible cache. The fallback
+is allowed to exist only because `tests/unit/test_powertools_fallback.py`
+asserts it resolves identically to the real library whenever both are present.
 
 | What | Path | Notes |
 |---|---|---|
@@ -228,11 +249,17 @@ zero LAN access -- only `market_cache.refresh()` (IEX) and `scada-cache/
 update_cache.py` (`\\...\scadashare`) are LAN-gated, and neither is on the
 read path. No hardcoded Windows path literals in `peak_hours/` itself (`grep`
 confirmed clean); `market_cache.py`'s `_IEX_ROOTS` already lists a macOS
-candidate (`~/Development/power-libraries`) alongside the Windows one. What
-a fresh MacBook checkout still needs, not provided by this repo: `D:\
-power-libraries`'s Mac equivalent on `PYTHONPATH` (so `powertools_common`
-and, if ever needed, `iex` import), and OneDrive signed in and synced (so
-`onedrive_root()` finds `~/Library/CloudStorage/OneDrive-*`).
+candidate (`~/Development/power-libraries`) alongside the Windows one.
+
+**Updated 2026-09-22 (same day), after "make it a complete separate project"**:
+the last two things a fresh MacBook checkout needed from elsewhere are gone.
+`powertools_common` is now optional (fallback above), and the legacy project
+is imported under `legacy/`. What remains is OneDrive signed in and synced, so
+`onedrive_root()` finds `~/Library/CloudStorage/OneDrive-*` — data, not code.
+Verified by importing `peak_hours.paths` and `scada_cache.config` with
+`powertools_common` blocked at `sys.meta_path`: all four roots still resolved
+to the correct OneDrive locations. Still not literally run on the MacBook —
+that remains an open item, not a claimed-verified one.
 
 ## Running things
 
@@ -247,7 +274,10 @@ python -m peak_hours.benchmarking.replay_scorecard 2026-09 \
 
 ## Running the legacy notebook (still holds the real declare logic)
 
-Lives in the separate `ML_Peak_Hour_Declaration` project, not this repo.
+To *read* it, use `legacy/notebooks/Peak_Hours_Complete_Pipeline_v1.py` in this
+repo. To *run* it you still need the original `.ipynb` in the
+`ML_Peak_Hour_Declaration` project — `legacy/` is a code-only, outputs-stripped
+conversion for reference, and the notebook needs a live kernel anyway.
 `Peak_Hours_Complete_Pipeline_v1.ipynb`, cell 2: `PEAK_MONTH` +
 `DECLARATION_LEAD_DAYS` are the single source of truth. Requires LAN (IEX
 API, `\\...\scadashare`, Open-Meteo) — cannot run on the MacBook.

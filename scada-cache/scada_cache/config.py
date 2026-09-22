@@ -75,9 +75,16 @@ def powertools_home() -> Path:
     on this Windows machine: `~/PowerTools` was a real local folder, while the
     actual synced parquet cache already existed at the OneDrive location this
     function now returns.
+
+    `powertools_common` is preferred but not required: on a clone of this repo
+    without the power-libraries checkout, `peak_hours._powertools_fallback`
+    answers identically (a drift test pins the two together).
     """
-    from powertools_common.paths import powertools_home as _shared_powertools_home
-    return _shared_powertools_home()
+    try:
+        from powertools_common.paths import powertools_home as _shared
+    except ImportError:  # pragma: no cover - machines without power-libraries
+        from peak_hours._powertools_fallback import powertools_home as _shared
+    return _shared()
 
 
 def default_cache_dir() -> Path:

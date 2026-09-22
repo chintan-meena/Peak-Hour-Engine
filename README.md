@@ -6,10 +6,15 @@ regulation requires be filed ~10 days ahead of each month, replacing an
 ad-hoc, hand-weighted scoring pipeline with a methodology where every
 parameter has to earn its place via out-of-sample evidence.
 
-**Status:** early — Segment 1 (data access) is done and verified; the
-declare engine itself (`peak_hours/engine/`) is still a stub. See
-[`CLAUDE.md`](CLAUDE.md) for the full migration plan, current state, and the
-empirical findings this project is built around.
+**Status:** early — Segments 1 (data access) and 2 (engine primitives) are
+done and verified; nothing is wired to real data through the new engine yet.
+See [`CLAUDE.md`](CLAUDE.md) for the full migration plan, current state, and
+the empirical findings this project is built around.
+
+This is a standalone project: a clone plus the shared OneDrive data area is
+everything it needs. The tool it replaces is imported whole under
+[`legacy/`](legacy/README.md) as frozen reference, so no segment of the
+migration requires another repository to be checked out.
 
 ## The core finding
 
@@ -32,9 +37,12 @@ python -m peak_hours.benchmarking.replay_scorecard 2026-09 \
     --candidate "model (frozen Aug-22)=18:45-21:45"
 ```
 
-Data (market prices, declaration history, SCADA readings) is read from a
-shared OneDrive cache via `powertools_common` — nothing to configure locally
-beyond having that on `PYTHONPATH`. See `CLAUDE.md` for the full data layout.
+Data (market prices, declaration history, SCADA readings) is read from the
+shared OneDrive PowerTools area, found automatically on both Windows and
+macOS — nothing to configure. If the `power-libraries` checkout happens to be
+on `PYTHONPATH`, its `powertools_common` is used; if not, a vendored copy of
+the same path resolution takes over, so a bare clone still works. See
+`CLAUDE.md` for the full data layout.
 
 ## Layout
 
@@ -48,6 +56,7 @@ peak_hours/
 scada-cache/     self-contained SCADA parquet cache reader (code only; data is OneDrive)
 configs/         thermal.yaml / hydro.yaml engine profiles (Segment 2+)
 tests/           unit tests (no network needed) + regression tests (need the SCADA cache)
+legacy/          the original ML_Peak_Hour_Declaration project, frozen as reference
 ```
 
 ## Private repository

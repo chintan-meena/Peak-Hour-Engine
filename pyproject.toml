@@ -16,10 +16,14 @@ dependencies = [
     "truststore>=0.8",  # OS cert store, needed on the TLS-inspecting office proxy
 ]
 
-# NOTE: `powertools_common` (peak_hours.paths' cache_dir/reports_dir) and, for
-# the --refresh path, `iex` are internal libraries at D:\power-libraries, not
-# on PyPI. They resolve via that directory being on PYTHONPATH (already set
-# machine-wide here) rather than through this dependency list -- see README.
+# NOTE: the two internal libraries at D:\power-libraries are not on PyPI and so
+# cannot be listed here. Both are optional by design, so this package installs
+# and runs on a machine that has neither.
+#   powertools_common  -- path resolution. Preferred when importable (it is the
+#                         shared source of truth across every power-tool), but
+#                         peak_hours._powertools_fallback answers identically
+#                         when it isn't, so a bare clone of this repo works.
+#   iex                -- only reachable via market-data `--refresh`, LAN-only.
 
 [project.optional-dependencies]
 # Only needed to refresh market data from IEX on the LAN machine; not required

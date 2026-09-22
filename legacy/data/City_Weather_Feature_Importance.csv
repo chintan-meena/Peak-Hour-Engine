@@ -1,0 +1,41 @@
+City,State,Total_Importance,Num_Features,Recommend
+Dharamsala,HP,0.017714,10,KEEP
+Shimla,HP,0.017333,10,KEEP
+Mandi,HP,0.014381,10,KEEP
+Haridwar,Uttarakhand,0.013714,10,KEEP
+Udaipur,Rajasthan,0.012476,10,KEEP
+Leh,J&K Ladakh,0.012286,10,KEEP
+Bikaner,Rajasthan,0.012286,10,KEEP
+Prayagraj,UP,0.01219,10,KEEP
+Gorakhpur,UP,0.01181,10,KEEP
+Dehradun,Uttarakhand,0.011524,10,KEEP
+Ajmer,Rajasthan,0.010476,10,KEEP
+Jodhpur,Rajasthan,0.010476,10,KEEP
+Srinagar,J&K Ladakh,0.009714,10,KEEP
+Jammu,J&K Ladakh,0.008286,10,KEEP
+Kota,Rajasthan,0.008095,10,KEEP
+Roorkee,Uttarakhand,0.008,10,KEEP
+Chandigarh,Chd,0.008,10,KEEP
+Varanasi,UP,0.007905,10,KEEP
+Bareilly,UP,0.006857,10,KEEP
+Meerut,UP,0.006571,10,KEEP
+Rohtak,Haryana,0.006286,10,KEEP
+Bathinda,Punjab,0.006286,10,KEEP
+Lucknow,UP,0.006095,10,KEEP
+Kanpur,UP,0.00581,10,KEEP
+Sriganganagar,Rajasthan,0.005714,10,KEEP
+Patiala,Punjab,0.005524,10,KEEP
+Ludhiana,Punjab,0.005333,10,KEEP
+Jaipur,Rajasthan,0.005333,10,KEEP
+Hisar,Haryana,0.005333,10,KEEP
+Safdarjung,Delhi,0.005143,10,KEEP
+Ambala,Haryana,0.004952,10,KEEP
+Noida,UP,0.004571,10,KEEP
+Amritsar,Punjab,0.004571,10,KEEP
+Faridabad,Haryana,0.004095,10,KEEP
+Agra,UP,0.004,10,KEEP
+Panipat,Haryana,0.003905,10,KEEP
+Gurugram,Haryana,0.003619,10,KEEP
+Jalandhar,Punjab,0.003619,10,KEEP
+Palam,Delhi,0.003333,10,KEEP
+LodiBhawan,Delhi,0.000381,10,CONSIDER DROPPING
