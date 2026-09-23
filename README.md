@@ -29,13 +29,22 @@ it, and document it well enough to publish.
 ## Quickstart
 
 ```bash
-pip install -e ".[dev]"
+cd D:\power-research\Peak_Hour_Engine     # or wherever you cloned it
+pip install -e ".[dev]"                   # re-run this after moving the repo
 python -m pytest tests/unit -q
 
-python -m peak_hours.benchmarking.ex_post_optimal
+# score real declarations against the ex-post optimum (39 months)
+peak-hours benchmark
+peak-hours benchmark --type hydro
+
+# score named candidate windows for one month, in-progress months included
 python -m peak_hours.benchmarking.replay_scorecard 2026-09 \
     --candidate "model (frozen Aug-22)=18:45-21:45"
 ```
+
+`peak-hours --help` lists the subcommands that exist today (`benchmark`,
+`register`). `declare` and `backtest` arrive with Segments 5 and 7 — until
+then the actual monthly declaration is still produced by the legacy pipeline.
 
 Data (market prices, declaration history, SCADA readings) is read from the
 shared OneDrive PowerTools area, found automatically on both Windows and

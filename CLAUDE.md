@@ -275,6 +275,15 @@ that remains an open item, not a claimed-verified one.
 
 ## Running things
 
+**`pip install -e .` records an absolute path.** Moving or cloning the repo
+leaves the old path in
+`site-packages/__editable___peak_hours_*_finder.py`, and imports then resolve
+to wherever it used to be — silently, as long as you happen to be `cd`'d into
+the repo, because the local `peak_hours/` folder shadows it. Re-run the
+install after any move or fresh clone. Caught exactly this way after the
+relocation to `D:\power-research` (the stale entry still pointed at
+`D:\power-applications\Peak_Hour_Engine\peak_hours`, which is now empty).
+
 ```
 pip install -e ".[dev,forecasting]"      # forecasting extra only needed to run the legacy notebook's stack
 python -m pytest tests/unit -q           # no network/LAN needed
